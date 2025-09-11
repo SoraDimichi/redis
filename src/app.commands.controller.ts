@@ -8,10 +8,10 @@ import {
   HttpException,
   HttpStatus,
 } from '@nestjs/common';
-import { ProductsProvider } from './products.provider';
+import { ProductsProvider } from './app.provider';
 import { ProductDto, UpdateProductDto } from './dto/product.dto';
 
-@Controller('products')
+@Controller()
 export class ProductsCommandsController {
   constructor(private readonly productsProvider: ProductsProvider) {}
 

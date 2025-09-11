@@ -7,11 +7,11 @@ import {
   HttpStatus,
   UseInterceptors,
 } from '@nestjs/common';
-import { ProductsProvider } from './products.provider';
+import { ProductsProvider } from './app.provider';
 import { QueryParamsDto, SearchQueryParamsDto } from './dto/query-params.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
-@Controller('products')
+@Controller()
 @UseInterceptors(CacheInterceptor)
 export class ProductsQueriesController {
   constructor(private readonly productsQueriesService: ProductsProvider) {}
