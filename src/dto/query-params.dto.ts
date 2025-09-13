@@ -6,33 +6,41 @@ export enum SortOrder {
   DESC = 'desc',
 }
 
-export class QueryParamsDto {
+export enum ParamsProducts {
+  LIMIT = 'limit',
+  SKIP = 'skip',
+  SELECT = 'select',
+  SORT_BY = 'sortBy',
+  ORDER = 'order',
+}
+
+export class QueryParamsProducts {
   @IsOptional()
   @IsString()
-  select?: string;
+  [ParamsProducts.SELECT]?: string;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(0)
-  skip?: number;
+  @Min(1)
+  [ParamsProducts.SKIP]?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(0)
-  limit?: number;
+  @Min(1)
+  [ParamsProducts.LIMIT]?: number;
 
   @IsOptional()
   @IsString()
-  sortBy?: string;
+  [ParamsProducts.SORT_BY]?: string;
 
   @IsOptional()
   @IsEnum(SortOrder)
-  order?: SortOrder;
+  [ParamsProducts.ORDER]?: SortOrder;
 }
 
-export class SearchQueryParamsDto extends QueryParamsDto {
+export class QueryParamsSearch {
   @IsString()
   q: string;
 }

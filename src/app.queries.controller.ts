@@ -1,14 +1,6 @@
-import {
-  Controller,
-  Get,
-  Param,
-  Query,
-  HttpException,
-  HttpStatus,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
 import { ProductsProvider } from './app.provider';
-import { QueryParamsDto, SearchQueryParamsDto } from './dto/query-params.dto';
+import { QueryParamsProducts, QueryParamsSearch } from './dto/query-params.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller()
@@ -17,80 +9,35 @@ export class ProductsQueriesController {
   constructor(private readonly productsQueriesService: ProductsProvider) {}
 
   @Get()
-  async getAllProducts(@Query() query: QueryParamsDto) {
-    try {
-      return await this.productsQueriesService.getAllProducts(query);
-    } catch {
-      throw new HttpException(
-        `Failed to fetch products`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  async getAllProducts(@Query() query: QueryParamsProducts) {
+    return this.productsQueriesService.getAllProducts(query);
   }
 
   @Get('search')
-  async searchProducts(@Query() params: SearchQueryParamsDto) {
-    try {
-      return await this.productsQueriesService.searchProducts(params.q, params);
-    } catch {
-      throw new HttpException(
-        `Failed to search products`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+  async searchProducts(@Query() params: QueryParamsSearch) {
+    return this.productsQueriesService.searchProducts(params);
   }
 
   @Get('categories')
   async getAllCategories() {
-    try {
-      return await this.productsQueriesService.getAllCategories();
-    } catch {
-      throw new HttpException(
-        `Failed to fetch categories:`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsQueriesService.getAllCategories();
   }
 
   @Get('category-list')
   async getCategoryList() {
-    try {
-      return await this.productsQueriesService.getCategoryList();
-    } catch {
-      throw new HttpException(
-        `Failed to fetch category list`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsQueriesService.getCategoryList();
   }
 
   @Get('category/:category')
   async getProductsByCategory(
     @Param('category') category: string,
-    @Query() query: QueryParamsDto,
+    @Query() query: QueryParamsProducts,
   ) {
-    try {
-      return await this.productsQueriesService.getProductsByCategory(
-        category,
-        query,
-      );
-    } catch {
-      throw new HttpException(
-        `Failed to fetch products by category`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsQueriesService.getProductsByCategory(category, query);
   }
 
   @Get(':id')
   async getProductById(@Param('id') id: string) {
-    try {
-      return await this.productsQueriesService.getProductById(id);
-    } catch {
-      throw new HttpException(
-        `Failed to fetch product`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsQueriesService.getProductById(id);
   }
 }

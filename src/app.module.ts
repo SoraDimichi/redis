@@ -1,26 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { HttpModule } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
 import { ProductsQueriesController } from './app.queries.controller';
 import { ProductsCommandsController } from './app.commands.controller';
 import { ProductsProvider } from './app.provider';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
+import { HttpClientProvider } from './http-client.provider';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, envFilePath: '.env' }),
-    HttpModule.registerAsync({
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        baseURL: configService.get<string>(
-          'API_BASE_URL',
-          'https://dummyjson.com',
-        ),
-        timeout: configService.get<number>('API_TIMEOUT', 5000),
-      }),
-    }),
     CacheModule.registerAsync({
       isGlobal: true,
       inject: [ConfigService],
@@ -34,6 +24,6 @@ import { createKeyv } from '@keyv/redis';
     }),
   ],
   controllers: [ProductsQueriesController, ProductsCommandsController],
-  providers: [ProductsProvider],
+  providers: [ProductsProvider, HttpClientProvider],
 })
 export class AppModule {}

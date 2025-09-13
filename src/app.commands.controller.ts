@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Post,
-  Put,
-  Delete,
-  Param,
-  Body,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { ProductsProvider } from './app.provider';
 import { ProductDto, UpdateProductDto } from './dto/product.dto';
 
@@ -17,14 +8,7 @@ export class ProductsCommandsController {
 
   @Post('add')
   async addProduct(@Body() productData: ProductDto) {
-    try {
-      return await this.productsProvider.addProduct(productData);
-    } catch {
-      throw new HttpException(
-        `Failed to add product`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsProvider.addProduct(productData);
   }
 
   @Put(':id')
@@ -32,25 +16,11 @@ export class ProductsCommandsController {
     @Param('id') id: string,
     @Body() productData: UpdateProductDto,
   ) {
-    try {
-      return await this.productsProvider.updateProduct(id, productData);
-    } catch {
-      throw new HttpException(
-        `Failed to update product`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsProvider.updateProduct(id, productData);
   }
 
   @Delete(':id')
   async deleteProduct(@Param('id') id: string) {
-    try {
-      return await this.productsProvider.deleteProduct(id);
-    } catch {
-      throw new HttpException(
-        `Failed to delete product`,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
+    return this.productsProvider.deleteProduct(id);
   }
 }
