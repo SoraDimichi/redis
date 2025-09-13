@@ -3,7 +3,7 @@ import { ProductsProvider } from './app.provider';
 import { QueryParamsProducts, QueryParamsSearch } from './dto/query-params.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
-@Controller()
+@Controller('products')
 @UseInterceptors(CacheInterceptor)
 export class ProductsQueriesController {
   constructor(private readonly productsQueriesService: ProductsProvider) {}

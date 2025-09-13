@@ -2,7 +2,7 @@ import { Controller, Post, Put, Delete, Param, Body } from '@nestjs/common';
 import { ProductsProvider } from './app.provider';
 import { ProductDto, UpdateProductDto } from './dto/product.dto';
 
-@Controller()
+@Controller('products')
 export class ProductsCommandsController {
   constructor(private readonly productsProvider: ProductsProvider) {}
 
