@@ -1,33 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { z } from 'zod';
-
-export class ValidationException extends Error {
-  constructor(
-    public readonly errors: z.ZodError | Error,
-    message: string = 'Validation failed',
-  ) {
-    super(message);
-    this.name = 'ValidationException';
-  }
-}
-
-export class HttpError<T = any> extends Error {
-  readonly status: number;
-  readonly data: T | null;
-
-  constructor(message: string, status: number, data: T | null = null) {
-    super(message);
-    this.name = 'HttpError';
-    this.status = status;
-    this.data = data;
-  }
-}
 
 export interface HttpClientOptions extends RequestInit {
   baseURL?: string;
   timeout?: number;
 }
+
+const errorSchema = z.object({ error: z.string(), message: z.string() });
 
 @Injectable()
 export class HttpClientProvider {
@@ -46,54 +26,32 @@ export class HttpClientProvider {
     };
   }
 
-  private validateData<T>(schema: z.ZodType<T>, data: unknown): T {
+  private async validateData<T>(schema: z.ZodType<T>, response: Response) {
     try {
-      return schema.parse(data);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        throw new ValidationException(
-          error,
-          `Response validation failed: ${error.message}`,
-        );
-      }
-      throw new ValidationException(
-        error instanceof Error ? error : new Error(String(error)),
-        'Response validation failed',
-      );
+      const data: unknown = await response.json();
+      return await schema.parseAsync(data);
+    } catch {
+      throw new HttpException('Response validation failed', 500);
     }
   }
 
   private async handleResponse<T>(response: Response, schema: z.ZodType<T>) {
     if (!response.ok) {
-      let errorData: unknown = null;
-      try {
-        errorData = await response.json();
-      } catch {
-        errorData = { message: response.statusText };
-      }
-      throw new HttpError<T>(
-        errorData?.message || `Request failed with status ${response.status}`,
+      const d = await this.validateData(errorSchema, response);
+      throw new HttpException(
+        d?.message || `Request failed with status ${response.status}`,
         response.status,
-        errorData as T,
       );
     }
 
-    try {
-      const data: unknown = await response.json();
-      return this.validateData(schema, data);
-    } catch (error) {
-      throw new HttpError(
-        error instanceof Error ? error.message : 'Response validation failed',
-        400,
-      );
-    }
+    return this.validateData(schema, response);
   }
 
   private async request<T>(
     url: string,
     options: HttpClientOptions,
     schema: z.ZodType<T>,
-  ): Promise<T> {
+  ) {
     const mergedOptions: HttpClientOptions = {
       ...options,
       headers: { ...this.defaultHeaders, ...options.headers },
@@ -115,18 +73,11 @@ export class HttpClientProvider {
       return await this.handleResponse(response, schema);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
-        throw new HttpError<T>(
+        throw new HttpException(
           `Request timeout after ${options.timeout ?? this.timeout}ms`,
           408,
-          null,
         );
       }
-      if (error instanceof HttpError) throw error;
-      throw new HttpError<T>(
-        error instanceof Error ? error.message : 'Unknown error',
-        500,
-        null,
-      );
     } finally {
       clearTimeout(timeoutId);
     }
