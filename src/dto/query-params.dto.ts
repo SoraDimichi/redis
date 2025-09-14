@@ -22,13 +22,13 @@ export class QueryParamsProducts {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(0)
   [ParamsProducts.SKIP]?: number;
 
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  @Min(1)
+  @Min(0)
   [ParamsProducts.LIMIT]?: number;
 
   @IsOptional()

@@ -1,5 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { z } from 'zod';
+
+export class ValidationException extends Error {
+  constructor(
+    public readonly errors: z.ZodError | Error,
+    message: string = 'Validation failed',
+  ) {
+    super(message);
+    this.name = 'ValidationException';
+  }
+}
 
 export class HttpError<T = any> extends Error {
   readonly status: number;
@@ -35,26 +46,53 @@ export class HttpClientProvider {
     };
   }
 
-  private async handleResponse<T>(response: Response): Promise<T> {
+  private validateData<T>(schema: z.ZodType<T>, data: unknown): T {
+    try {
+      return schema.parse(data);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        throw new ValidationException(
+          error,
+          `Response validation failed: ${error.message}`,
+        );
+      }
+      throw new ValidationException(
+        error instanceof Error ? error : new Error(String(error)),
+        'Response validation failed',
+      );
+    }
+  }
+
+  private async handleResponse<T>(response: Response, schema: z.ZodType<T>) {
     if (!response.ok) {
-      let errorData: any = null;
+      let errorData: unknown = null;
       try {
         errorData = await response.json();
       } catch {
         errorData = { message: response.statusText };
       }
       throw new HttpError<T>(
-        errorData.message || `Request failed with status ${response.status}`,
+        errorData?.message || `Request failed with status ${response.status}`,
         response.status,
-        errorData,
+        errorData as T,
       );
     }
-    return (await response.json()) as T;
+
+    try {
+      const data: unknown = await response.json();
+      return this.validateData(schema, data);
+    } catch (error) {
+      throw new HttpError(
+        error instanceof Error ? error.message : 'Response validation failed',
+        400,
+      );
+    }
   }
 
-  private async execute<T>(
+  private async request<T>(
     url: string,
     options: HttpClientOptions,
+    schema: z.ZodType<T>,
   ): Promise<T> {
     const mergedOptions: HttpClientOptions = {
       ...options,
@@ -74,7 +112,7 @@ export class HttpClientProvider {
 
     try {
       const response = await fetch(fullUrl, { ...mergedOptions, signal });
-      return await this.handleResponse<T>(response);
+      return await this.handleResponse(response, schema);
     } catch (error) {
       if (error instanceof DOMException && error.name === 'AbortError') {
         throw new HttpError<T>(
@@ -94,10 +132,6 @@ export class HttpClientProvider {
     }
   }
 
-  request<T>(url: string, options: HttpClientOptions = {}): Promise<T> {
-    return this.execute<T>(url, options);
-  }
-
   private buildQueryParams<U extends Record<string, any>>(params?: U): string {
     if (!params) return '';
 
@@ -111,33 +145,58 @@ export class HttpClientProvider {
     return queryString ? `?${queryString}` : '';
   }
 
-  get<T, U extends Record<string, any> = Record<string, any>>(
+  query<T, P extends Record<string, any> = Record<string, any>>(
     url: string,
-    params?: U,
+    schema: z.ZodType<T>,
+    params?: P,
     options: HttpClientOptions = {},
   ): Promise<T> {
     const queryString = this.buildQueryParams(params);
     const fullUrl = `${url}${queryString}`;
-    return this.request<T>(fullUrl, { ...options, method: 'GET' });
+    return this.request<T>(fullUrl, { ...options, method: 'GET' }, schema);
   }
 
-  post<T>(url: string, data: any, options: HttpClientOptions = {}): Promise<T> {
-    return this.request<T>(url, {
-      ...options,
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+  private command<T, D = Record<string, any>>(
+    url: string,
+    schema: z.ZodType<T>,
+    options: Omit<HttpClientOptions, 'method' | 'body'> = {},
+    method: 'POST' | 'PUT' | 'DELETE',
+    data?: D,
+  ) {
+    return this.request(
+      url,
+      {
+        ...options,
+        method: method,
+        body: JSON.stringify(data),
+      },
+      schema,
+    );
   }
 
-  put<T>(url: string, data: any, options: HttpClientOptions = {}): Promise<T> {
-    return this.request<T>(url, {
-      ...options,
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
+  post<T, D = Record<string, any>>(
+    url: string,
+    schema: z.ZodType<T>,
+    data: D,
+    options: HttpClientOptions = {},
+  ) {
+    return this.command(url, schema, options, 'POST', data);
   }
 
-  delete<T>(url: string, options: HttpClientOptions = {}): Promise<T> {
-    return this.request<T>(url, { ...options, method: 'DELETE' });
+  put<T, D = Record<string, any>>(
+    url: string,
+    schema: z.ZodType<T>,
+    data: D,
+    options: HttpClientOptions = {},
+  ) {
+    return this.command(url, schema, options, 'PUT', data);
+  }
+
+  delete<T>(
+    url: string,
+    schema: z.ZodType<T>,
+    options: HttpClientOptions = {},
+  ) {
+    return this.command(url, schema, options, 'DELETE');
   }
 }
