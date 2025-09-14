@@ -104,13 +104,13 @@ export class HttpClientProvider {
       : url;
 
     const controller = new AbortController();
-    const { signal } = controller;
     const timeoutId = setTimeout(
       () => controller.abort(),
       options.timeout ?? this.timeout,
     );
 
     try {
+      const { signal } = controller;
       const response = await fetch(fullUrl, { ...mergedOptions, signal });
       return await this.handleResponse(response, schema);
     } catch (error) {

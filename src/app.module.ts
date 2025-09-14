@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { ConfigService } from '@nestjs/config';
 import { ProductsQueriesController } from './app.queries.controller';
 import { ProductsCommandsController } from './app.commands.controller';
-import { ProductsProvider } from './app.provider';
+import { ProductsService } from './app.service';
 import { CacheModule } from '@nestjs/cache-manager';
 import { createKeyv } from '@keyv/redis';
 import { HttpClientProvider } from './http-client.provider';
@@ -24,6 +24,6 @@ import { HttpClientProvider } from './http-client.provider';
     }),
   ],
   controllers: [ProductsQueriesController, ProductsCommandsController],
-  providers: [ProductsProvider, HttpClientProvider],
+  providers: [ProductsService, HttpClientProvider],
 })
 export class AppModule {}

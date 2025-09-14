@@ -1,12 +1,12 @@
 import { Controller, Get, Param, Query, UseInterceptors } from '@nestjs/common';
-import { ProductsProvider } from './app.provider';
+import { ProductsService } from './app.service';
 import { QueryParamsProducts, QueryParamsSearch } from './dto/query-params.dto';
 import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('products')
 @UseInterceptors(CacheInterceptor)
 export class ProductsQueriesController {
-  constructor(private readonly productsQueriesService: ProductsProvider) {}
+  constructor(private readonly productsQueriesService: ProductsService) {}
 
   @Get()
   async getAllProducts(@Query() query: QueryParamsProducts) {

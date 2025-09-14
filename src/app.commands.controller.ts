@@ -1,10 +1,10 @@
 import { Controller, Post, Put, Delete, Param, Body } from '@nestjs/common';
-import { ProductsProvider } from './app.provider';
+import { ProductsService } from './app.service';
 import { ProductDto, UpdateProductDto } from './dto/product.dto';
 
 @Controller('products')
 export class ProductsCommandsController {
-  constructor(private readonly productsProvider: ProductsProvider) {}
+  constructor(private readonly productsProvider: ProductsService) {}
 
   @Post('add')
   async addProduct(@Body() productData: ProductDto) {
